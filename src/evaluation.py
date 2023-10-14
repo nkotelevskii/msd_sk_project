@@ -24,6 +24,7 @@ def test_attack(
 
     data_ = data_.to(device)
     labels_ = labels_.to(device)
+    labels_false_ = 1 - labels_
     data_.requires_grad = True
 
     output = model(data_)
@@ -63,6 +64,12 @@ def eval_model(
 def get_saliencies(
     model: torch.nn.Module, X: torch.Tensor, y: torch.Tensor, device: str
 ) -> tuple[np.ndarray, np.ndarray]:
+    
+    model.eval()
+    # Workaround for RNN
+    if hasattr(model, "lstm"):
+        model.lstm.train(True)
+    
     for p in model.parameters():
         p.requires_grad_(False)
 

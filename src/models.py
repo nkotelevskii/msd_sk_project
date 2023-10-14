@@ -136,4 +136,5 @@ class CNN(nn.Module):
         self.act = nn.Softmax(dim=1)
 
     def forward(self, x):
+        x = x.transpose(-1, -2)
         return self.act(self.classifier(self.features(x)))
