@@ -38,11 +38,12 @@ def parse_data(
     df = np.array(features0)
     labels = np.array(labels, dtype=int)
 
-    df_features = torch.tensor(df).float().unsqueeze(1)
-    df_labels = torch.tensor(labels).long()
-    df_features_t = torch.transpose(df_features, 1, 2)
+    #df_features = torch.tensor(df).float().unsqueeze(1)
+    #df_labels = torch.tensor(labels).long()
+    #df_features_t = torch.transpose(df_features, 1, 2)
 
-    return df_features_t, df_labels
+    #return df_features_t, df_labels
+    return df[:, :, None].astype(np.float32), labels.astype(np.int64)
 
 
 def split_train_test(

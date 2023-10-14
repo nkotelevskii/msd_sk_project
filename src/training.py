@@ -1,3 +1,5 @@
+from tqdm.auto import tqdm
+
 from src.models import LSTM
 import torch.nn as nn
 import torch
@@ -14,6 +16,7 @@ def trainer(
     X_val: torch.Tensor,
     y_val: torch.Tensor,
     device: str,
+    lr: float = 1e-4,
     tolerance: int = 10,
     freq_print: int = 25
 ) -> nn.Module:
@@ -26,13 +29,13 @@ def trainer(
     X_val = X_val.float().to(device)
     y_val = y_val.to(device)
 
-    optimizer = optim.Adam(model.parameters(), lr=1e-4)
+    optimizer = optim.Adam(model.parameters(), lr=lr)
 
     best_accuracy = 0
     counter = 0
     best_model = copy.deepcopy(model)
 
-    for epoch in range(n_epochs):
+    for epoch in tqdm(range(n_epochs)):
         model.train()
         optimizer.zero_grad()
 
