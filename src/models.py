@@ -177,9 +177,34 @@ class LSTMPlus(nn.Module):
         c0 = torch.ones(self.num_layers, x.size(0), self.hidden_size, device=x.device)
         out, _ = self.lstm(x, (h0, c0))
         out = out[:, -1, :]
+        #print(f"{out.shape=}")
         out = self.fc(out)
         return self.activation(out)
 
 
 class Transformer(nn.Module):
-    pass
+    def __init__(self, num_inputs, embed_dim, num_heads, num_classes):
+        super().__init__()
+        
+        self.num_inputs = num_inputs
+        self.num_classes = num_classes
+        self.embed_dim = embed_dim
+        self.num_heads = num_heads
+        
+        self.embed = nn.Linear(num_inputs, embed_dim)
+        self.multihead_attn = nn.MultiheadAttention(embed_dim, num_heads, 
+                                                    #kdim=embed_dim, vdim=embed_dim, 
+                                                    batch_first=True)
+        self.drop = nn.Dropout(0.1)
+        self.fc = nn.Sequential(
+            nn.Flatten(),
+            nn.Linear(embed_dim * 24, num_classes)
+        )
+        self.activation = nn.Softmax(dim=1)
+    
+    def forward(self, x):
+        x = self.drop(x)
+        x = self.embed(x)
+        out, out2 = self.multihead_attn(x, x, x)
+        #print(f"{out.shape=}, {out2.shape=}")
+        return self.activation(self.fc(out))

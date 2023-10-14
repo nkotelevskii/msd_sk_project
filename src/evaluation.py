@@ -90,6 +90,12 @@ def get_saliencies(
     return saliencies_0, saliencies_1
 
 
+def get_saliencies2(
+    model: torch.nn.Module, X: torch.Tensor, y: torch.Tensor, device: str
+) -> tuple[np.ndarray, np.ndarray]:
+    s, _ = get_saliencies(model=model, X=X, y=y, device=device)
+    return np.transpose(s, (0, 1, 2)).squeeze()
+
 def vizualize_saliency(
     df: torch.Tensor,
     labels: torch.Tensor,
