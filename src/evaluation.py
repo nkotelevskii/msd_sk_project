@@ -96,6 +96,16 @@ def get_saliencies2(
     s, _ = get_saliencies(model=model, X=X, y=y, device=device)
     return np.transpose(s, (0, 1, 2)).squeeze()
 
+
+def get_att_mat(model, X, device):
+    model.eval()
+    X = X.to(device)
+    with torch.no_grad():
+        _ = model(X)
+        A = model.A.cpu().detach().numpy()
+    return A
+
+
 def vizualize_saliency(
     df: torch.Tensor,
     labels: torch.Tensor,

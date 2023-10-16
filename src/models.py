@@ -58,16 +58,6 @@ class LSTM(nn.Module):
             nn.Flatten(),
             nn.Linear(hidden_size, num_classes)
         )
-        """self.linear = nn.Sequential(
-            nn.Flatten(),
-            nn.BatchNorm1d(hidden_size),
-            nn.Dropout(0.7),
-            nn.Linear(hidden_size, 1000),
-            nn.ReLU(),
-            nn.BatchNorm1d(1000),
-            nn.Dropout(0.5),
-            nn.Linear(1000, num_classes),
-        )"""
         
         self.activation = nn.Softmax(dim=1)
 
@@ -80,40 +70,6 @@ class LSTM(nn.Module):
         #out = self.drop(out)
         out = out[:, -1, :]
         out = self.linear(out)
-        return self.activation(out)
-
-
-class LSTMAtt(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, num_classes):
-        super().__init__()
-        self.num_layers = num_layers
-        self.hidden_size = hidden_size
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
-        self.attention = Attention(hidden_size, hidden_size, hidden_size)
-        self.classifier = nn.Sequential(
-            nn.Flatten(),
-            nn.BatchNorm1d(hidden_size),
-            nn.Dropout(0.7),
-            nn.Linear(hidden_size, 1024),
-            nn.ReLU(),
-            nn.BatchNorm1d(1024),
-            nn.Dropout(0.5),
-            nn.Linear(1024, 1024),
-            nn.ReLU(),
-            nn.BatchNorm1d(1024),
-            nn.Dropout(0.5),
-            nn.Linear(1024, num_classes),
-        )
-        self.activation = nn.Softmax(dim=1)
-
-    def forward(self, x):
-        h0 = torch.ones(self.num_layers, x.size(0), self.hidden_size, device=x.device)
-        c0 = torch.ones(self.num_layers, x.size(0), self.hidden_size, device=x.device)
-        self.lstm.flatten_parameters()
-        out, _ = self.lstm(x, (h0, c0))
-        out = self.attention(out, out, out)
-        out = out[:, -1, :]
-        out = self.classifier(out)
         return self.activation(out)
 
 
@@ -140,15 +96,6 @@ class CNN(nn.Module):
             nn.Linear(128, num_classes)
         )
 
-        """self.classifier = nn.Sequential(
-            nn.Flatten(),
-            nn.Dropout(0.3),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.BatchNorm1d(128),
-            nn.Dropout(0.3),
-            nn.Linear(128, num_classes),
-        )"""
         self.act = nn.Softmax(dim=1)
 
     def forward(self, x):
@@ -194,17 +141,19 @@ class Transformer(nn.Module):
         self.embed = nn.Linear(num_inputs, embed_dim)
         self.multihead_attn = nn.MultiheadAttention(embed_dim, num_heads, 
                                                     #kdim=embed_dim, vdim=embed_dim, 
-                                                    batch_first=True)
+                                                    batch_first=True,)
+                                                    #average_attn_weights=False)
         self.drop = nn.Dropout(0.1)
         self.fc = nn.Sequential(
             nn.Flatten(),
             nn.Linear(embed_dim * 24, num_classes)
         )
         self.activation = nn.Softmax(dim=1)
+        self.A = None
     
     def forward(self, x):
         x = self.drop(x)
         x = self.embed(x)
-        out, out2 = self.multihead_attn(x, x, x)
+        out, self.A = self.multihead_attn(x, x, x)
         #print(f"{out.shape=}, {out2.shape=}")
         return self.activation(self.fc(out))
