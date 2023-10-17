@@ -58,7 +58,7 @@ def eval_model(
         predictions = torch.argmax(outputs, dim=1).cpu().numpy()
         accuracy = balanced_accuracy_score(y_test.cpu().numpy(), predictions)
         print(f"{model_name} test accuracy = {accuracy}")
-    return accuracy
+    return accuracy, predictions
 
 
 def get_saliencies(
@@ -94,6 +94,37 @@ def get_saliencies2(
     model: torch.nn.Module, X: torch.Tensor, y: torch.Tensor, device: str
 ) -> tuple[np.ndarray, np.ndarray]:
     s, _ = get_saliencies(model=model, X=X, y=y, device=device)
+    return np.transpose(s, (0, 1, 2)).squeeze()
+
+
+def get_saliencies3(
+    model: torch.nn.Module, X: torch.Tensor, y: torch.Tensor, device: str
+) -> tuple[np.ndarray, np.ndarray]:
+
+    model.eval()
+    # Workaround for RNN
+    if hasattr(model, "lstm"):
+        model.lstm.train(True)
+    
+    for p in model.parameters():
+        p.requires_grad_(False)
+
+    X = X.to(device)
+    X.requires_grad_(True)
+
+    preds = model(X)
+    
+    y_one_hot = torch.zeros_like(preds)
+    y_one_hot[:, y] = 1
+    
+    preds.backward(gradient=y_one_hot)
+    
+    grad = X.grad.cpu().numpy()
+    
+    s = np.absolute(grad)
+    
+    print(f"{s.shape=}")
+
     return np.transpose(s, (0, 1, 2)).squeeze()
 
 
