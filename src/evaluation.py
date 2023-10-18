@@ -12,12 +12,21 @@ def fgsm_attack(
     return perturbed_input
 
 
+def fgsm_attack_last_elements(
+    input_: torch.Tensor, epsilon: torch.Tensor, data_grad: torch.Tensor
+) -> torch.Tensor:
+    sign_data_grad = data_grad.sign()
+    sign_data_grad[:,:22,:] = 0
+    perturbed_input = input_ + epsilon * sign_data_grad
+    return perturbed_input
+
 def test_attack(
     model: torch.nn.Module,
     data_: torch.Tensor,
     labels_: torch.Tensor,
     epsilon: torch.Tensor,
     device: str,
+    attack_type: str,
 ) -> tuple[float, np.ndarray, np.ndarray]:
     criterion = torch.nn.CrossEntropyLoss().to(device)
     correct = 0
@@ -33,7 +42,12 @@ def test_attack(
     loss.backward()
     data_grad = data_.grad.data
     with torch.no_grad():
-        perturbed_data = fgsm_attack(data_, epsilon, data_grad)
+        if attack_type == "last_elements":
+            perturbed_data = fgsm_attack_last_elements(data_, epsilon, data_grad)
+        elif attack_type == "all_elements":
+            perturbed_data = fgsm_attack(data_, epsilon, data_grad)
+        else:
+            perturbed_data = fgsm_attack(data_, epsilon, data_grad)
         output = model(perturbed_data)
         final_pred = output.argmax(dim=1)
         correct += (final_pred == labels_).sum().item()
