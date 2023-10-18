@@ -34,44 +34,48 @@ def trainer(
     best_accuracy = 0
     counter = 0
     best_model = copy.deepcopy(model)
+    
+    with tqdm(range(n_epochs)) as pbar:
 
-    for epoch in tqdm(range(n_epochs)):
-        model.train()
-        optimizer.zero_grad()
+        for epoch in pbar:
+            pbar.set_description(f"Epoch: {epoch}")
+            model.train()
+            optimizer.zero_grad()
 
-        outputs = model(X_train)
-        loss = criterion(outputs, y_train.squeeze())
-        loss.backward()
-        optimizer.step()
+            outputs = model(X_train)
+            loss = criterion(outputs, y_train.squeeze())
+            loss.backward()
+            optimizer.step()
 
-        with torch.no_grad():
-            model.eval()
-            outputs = model(X_val)
-            _, predictions = torch.max(outputs.data, 1)
-            predictions = predictions.cpu().detach().numpy()
+            with torch.no_grad():
+                model.eval()
+                outputs = model(X_val)
+                _, predictions = torch.max(outputs.data, 1)
+                predictions = predictions.cpu().detach().numpy()
 
-            train_acc = balanced_accuracy_score(
-                y_train.cpu().numpy(),
-                torch.argmax(model(X_train), dim=1).cpu().detach().numpy(),
-            )
-            test_acc = balanced_accuracy_score(y_val.cpu().numpy(), predictions)
-        if (epoch + 1) % freq_print == 0:
-            print(
-                (
-                    f"Epoch = {epoch}, \t"
-                    f"Loss = {loss}, \t"
-                    f"Training_acc = {train_acc}, \t"
-                    f"Validation_acc = {test_acc}"
+                train_acc = balanced_accuracy_score(
+                    y_train.cpu().numpy(),
+                    torch.argmax(model(X_train), dim=1).cpu().detach().numpy(),
                 )
-            )
-        if test_acc > best_accuracy:
-            best_accuracy = test_acc
-            best_model = copy.deepcopy(model)
-            counter = 0
-        else:
-            counter += 1
-            if counter == tolerance:
-                break
+                test_acc = balanced_accuracy_score(y_val.cpu().numpy(), predictions)
+            pbar.set_postfix({"loss": loss.item(), "train_acc": train_acc, "val_acc": test_acc})
+            """if (epoch + 1) % freq_print == 0:
+                print(
+                    (
+                        f"Epoch = {epoch}, \t"
+                        f"Loss = {loss}, \t"
+                        f"Training_acc = {train_acc}, \t"
+                        f"Validation_acc = {test_acc}"
+                    )
+                )"""
+            if test_acc > best_accuracy:
+                best_accuracy = test_acc
+                best_model = copy.deepcopy(model)
+                counter = 0
+            else:
+                counter += 1
+                if counter == tolerance:
+                    break
 
     print(f"Best validation accuracy is: {best_accuracy}")
     return best_model

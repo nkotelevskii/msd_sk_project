@@ -121,9 +121,10 @@ def get_saliencies3(
     
     grad = X.grad.cpu().numpy()
     
-    s = np.absolute(grad)
+    #s = np.absolute(grad)
+    s = grad
     
-    print(f"{s.shape=}")
+    #print(f"{s.shape=}")
 
     return np.transpose(s, (0, 1, 2)).squeeze()
 

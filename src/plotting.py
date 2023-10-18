@@ -43,7 +43,7 @@ def plot_saliency_eps(model, idx, epsilons, saliency_dict, predicted_label_dict,
 
 def plot_saliency_heatmap(sal, y_true, idx_test_sorted=None, ax=None):
     if idx_test_sorted is None:
-        idx_test_sorted = np.argsort(y_true)
+        idx_test_sorted = np.argsort(y_true, kind='stable')
     
     if ax is None:
         fig, (ax_main, ax_class) = plt.subplots(1, 2, sharey=True)
